@@ -16,15 +16,27 @@ exports.form = (req, res) => {
 
 exports.submit = (req, res, next) => {
   const data = req.body.entry;
-  const user = req.locals.user;
+  const user = res.locals.user;
   const username = user ? user.name : null;
-  const entry = new entry({
+  const entry = new Entry({
     username: username,
     title: data.title,
     body: data.body
   });
   entry.save((err) => {
     if (err) return next(err)
-    res.redirect('/');
-  })
+    if (req.remoteUser) {
+      res.json({message: 'Entry added.'});
+    } else {
+      res.redirect('/');
+    }
+  });
 }
+
+exports.entries = (req, res, next) => {
+  const page = req.page;
+  Entry.getRange(page.from, page.to, (err, entries) => {
+    if (err) return next(err);
+    res.json(entries);
+  });
+};
